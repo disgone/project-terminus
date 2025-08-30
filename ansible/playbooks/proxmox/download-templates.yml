@@ -1,0 +1,45 @@
+---
+# ansible/playbooks/download-templates.yml
+- name: Download Proxmox LXC Templates
+  hosts: proxmox
+  become: true
+  gather_facts: false
+
+  vars_prompt:
+    - name: pve_storage
+      prompt: "Enter the Proxmox storage pool for templates"
+      default: "local"
+      private: false
+
+    - name: templates_csv
+      prompt: "Enter a comma-separated list of LXC templates to download"
+      private: false
+
+  pre_tasks:
+    - name: Convert template string to list and remove whitespace
+      ansible.builtin.set_fact:
+        lxc_templates: "{{ templates_csv.split(',') | map('trim') | reject('==', '') | list }}"
+      when: templates_csv is defined and templates_csv | length > 0
+
+    - name: Assert that the template list is not empty
+      ansible.builtin.assert:
+        that:
+          - lxc_templates is defined
+          - lxc_templates | length > 0
+        fail_msg: "The LXC template list cannot be empty."
+        quiet: true
+
+    - name: Validate template name format
+      ansible.builtin.assert:
+        that:
+          - item | regex_search('.*\.(tar\.zst|tar\.gz|tar\.xz)$')
+        fail_msg: "Template '{{ item }}' does not have a valid format. Templates should end with .tar.zst, .tar.gz, or .tar.xz"
+        quiet: true
+      loop: "{{ lxc_templates }}"
+
+    - name: Display templates to be processed
+      ansible.builtin.debug:
+        msg: "Will ensure these templates are available on storage '{{ pve_storage }}': {{ lxc_templates | join(', ') }}"
+
+  roles:
+    - role: proxmox

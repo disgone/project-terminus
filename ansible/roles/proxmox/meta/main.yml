@@ -1,0 +1,25 @@
+---
+# ansible/roles/proxmox/meta/main.yml
+galaxy_info:
+  role_name: proxmox
+  author: Shaun Smith
+  description: Manages Proxmox VE LXC template downloads using pveam and pvesm commands
+  
+  license: Unlicense
+  
+  min_ansible_version: "2.9"
+  
+  # This role works on any platform that runs Proxmox VE
+  platforms:
+    - name: GenericLinux
+      versions:
+        - all
+  
+  galaxy_tags:
+    - proxmox
+    - lxc
+    - containers
+    - templates
+    - virtualization
+
+dependencies: []

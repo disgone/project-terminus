@@ -1,0 +1,10 @@
+---
+# ansible/roles/proxmox/defaults/main.yml
+# Default values for the proxmox role.
+
+# The Proxmox storage pool to use for templates.
+pve_storage: "local"
+
+# A list of LXC templates to ensure are downloaded.
+# This list is expected to be overridden by the playbook.
+lxc_templates: []

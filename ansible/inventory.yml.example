@@ -1,0 +1,12 @@
+all:
+  children:
+    proxmox:
+      hosts:
+        proxmox-host-1:
+          ansible_host: 192.168.1.101
+        proxmox-host-2:
+          ansible_host: 192.168.1.102
+        proxmox-host-3:
+          ansible_host: 192.168.1.103
+      vars:
+        ansible_user: your_user

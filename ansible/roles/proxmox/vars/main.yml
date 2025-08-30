@@ -1,0 +1,16 @@
+---
+# ansible/roles/proxmox/vars/main.yml
+# Role variables with higher precedence than defaults
+
+# Common LXC template file extensions for validation
+valid_template_extensions:
+  - ".tar.zst"
+  - ".tar.gz" 
+  - ".tar.xz"
+
+# Proxmox commands used by this role
+proxmox_commands:
+  update_catalog: "pveam update"
+  download_template: "pveam download"
+  storage_status: "pvesm status"
+  storage_path: "pvesm path"

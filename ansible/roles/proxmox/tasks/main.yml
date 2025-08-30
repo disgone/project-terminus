@@ -1,0 +1,138 @@
+---
+# ansible/roles/proxmox/tasks/main.yml
+- name: Refresh Proxmox VE template catalog
+  ansible.builtin.command: pveam update
+  changed_when: false
+  failed_when: false
+  tags:
+    - proxmox
+    - lxc
+
+- name: Get storage status to validate storage exists
+  ansible.builtin.command: pvesm status
+  register: storage_status
+  changed_when: false
+  failed_when: storage_status.rc != 0
+  tags:
+    - proxmox
+    - lxc
+
+- name: Validate that specified storage exists
+  ansible.builtin.assert:
+    that:
+      - pve_storage in storage_status.stdout
+    fail_msg: "Storage '{{ pve_storage }}' not found in available storages"
+    success_msg: "Storage '{{ pve_storage }}' is valid and available"
+  tags:
+    - proxmox
+    - lxc
+
+- name: Get storage configuration to resolve path
+  ansible.builtin.shell: pvesm status | grep "^{{ pve_storage }}" | awk '{print $3}'
+  register: storage_path_result
+  changed_when: false
+  tags:
+    - proxmox
+    - lxc
+
+- name: Set storage path variable
+  ansible.builtin.set_fact:
+    storage_path: "{{ storage_path_result.stdout | trim }}"
+  tags:
+    - proxmox
+    - lxc
+
+- name: Verify storage path is valid
+  ansible.builtin.debug:
+    msg: "Using storage path: {{ storage_path }}"
+  tags:
+    - proxmox
+    - lxc
+
+- name: Ensure template cache directory exists
+  ansible.builtin.file:
+    path: "{{ storage_path }}/template/cache"
+    state: directory
+    mode: '0755'
+  tags:
+    - proxmox
+    - lxc
+
+- name: Get available templates from Proxmox catalog
+  ansible.builtin.command: pveam available
+  register: available_templates
+  changed_when: false
+  tags:
+    - proxmox
+    - lxc
+
+- name: Show available templates for reference
+  ansible.builtin.debug:
+    msg: "Available templates:\n{{ available_templates.stdout_lines | select('match', '.*debian.*') | list | join('\n') }}"
+  when: available_templates.stdout_lines is defined
+  tags:
+    - proxmox
+    - lxc
+
+- name: Validate that requested templates exist in catalog
+  ansible.builtin.assert:
+    that:
+      - item in available_templates.stdout
+    fail_msg: |
+      Template '{{ item }}' not found in Proxmox catalog.
+      
+      Similar available templates:
+      {{ available_templates.stdout_lines | select('match', '.*' + item.split('_')[0] + '.*') | list | join('\n') }}
+      
+      Run 'pveam available' on a Proxmox node to see all available templates.
+    success_msg: "Template '{{ item }}' found in catalog"
+  loop: "{{ lxc_templates }}"
+  tags:
+    - proxmox
+    - lxc
+
+- name: Check for existing LXC templates
+  ansible.builtin.stat:
+    path: "{{ storage_path }}/template/cache/{{ item }}"
+  loop: "{{ lxc_templates }}"
+  register: template_files
+  tags:
+    - proxmox
+    - lxc
+
+- name: Display templates already present
+  ansible.builtin.debug:
+    msg: "Template '{{ item.item }}' already exists - skipping download"
+  loop: "{{ template_files.results }}"
+  when: item.stat.exists
+  tags:
+    - proxmox
+    - lxc
+
+- name: Download missing LXC templates
+  ansible.builtin.command: pveam download {{ pve_storage }} {{ item.item }}
+  loop: "{{ template_files.results }}"
+  when: not item.stat.exists
+  register: download_results
+  failed_when:
+    - download_results.rc != 0
+    - "'already exists' not in download_results.stderr"
+  tags:
+    - proxmox
+    - lxc
+
+- name: Display download results
+  ansible.builtin.debug:
+    msg: >
+      {% if item.rc == 0 %}
+      Successfully downloaded template '{{ item.item.item }}'
+      {% elif 'already exists' in item.stderr %}
+      Template '{{ item.item.item }}' already exists - no action needed
+      {% else %}
+      Failed to download template '{{ item.item.item }}': {{ item.stderr }}
+      {% endif %}
+  loop: "{{ download_results.results | default([]) }}"
+  when: download_results is defined and item is not skipped
+  tags:
+    - proxmox
+    - lxc

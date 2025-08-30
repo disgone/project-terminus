@@ -1,0 +1,84 @@
+# ==============================================================================
+# .gitignore for Infrastructure as Code Project
+# VSCode + OS + Ansible + Terraform/OpenTofu + Kubernetes
+# ==============================================================================
+
+# VSCode
+.vscode/
+*.code-workspace
+.history/
+
+# OS Generated Files
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# Ansible
+*.retry
+ansible.log
+.ansible/
+
+# Only ignore downloaded roles/collections, not custom ones
+roles/*/
+!roles/proxmox/
+collections/ansible_collections/
+
+# Terraform/OpenTofu
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.*
+crash.log
+crash.*.log
+
+# Terraform variable files (may contain secrets)
+*.tfvars
+*.tfvars.json
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# OpenTofu specific
+.tofu/
+
+# Kubernetes
+# Only ignore files likely to contain secrets
+*secret*.yaml
+*secret*.yml
+kubeconfig*
+
+# General sensitive files
+.env
+.env.*
+*.pem
+*.key
+*.crt
+
+# Temporary and backup files
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+ansible/inventory.yml

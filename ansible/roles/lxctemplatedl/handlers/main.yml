@@ -1,0 +1,4 @@
+---
+- name: Template downloaded
+  ansible.builtin.debug:
+    msg: "LXC templates have been downloaded to {{ lxctemplatedl_storage }} storage"

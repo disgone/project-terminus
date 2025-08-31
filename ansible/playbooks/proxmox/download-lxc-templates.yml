@@ -1,0 +1,82 @@
+---
+# Playbook to download and manage LXC templates on Proxmox nodes
+# This ensures all specified templates are available across the Proxmox infrastructure
+
+- name: Download LXC templates to Proxmox nodes
+  hosts: proxmox
+  become: true
+  gather_facts: false
+
+  vars:
+    # Default templates to download on all nodes
+    proxmox_lxc_templates:
+      - name: "ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
+      - name: "debian-12-standard_12.2-1_amd64.tar.zst"
+
+    # Template management settings
+    proxmox_lxc_template_storage: local
+    proxmox_lxc_template_update_list: true
+    proxmox_lxc_template_ensure_present: true
+    proxmox_lxc_template_force_download: false
+    proxmox_lxc_template_timeout: 600
+
+  pre_tasks:
+    - name: Verify Proxmox VE is available
+      ansible.builtin.command:
+        cmd: which pveam
+      changed_when: false
+      failed_when: false
+      register: pveam_check
+
+    - name: Fail if pveam is not available
+      ansible.builtin.fail:
+        msg: "pveam command not found. This playbook requires Proxmox VE."
+      when: pveam_check.rc != 0
+
+    - name: Display target nodes
+      ansible.builtin.debug:
+        msg: "Downloading templates to {{ inventory_hostname }} ({{ ansible_host | default('localhost') }})"
+
+  roles:
+    - role: lxctemplatedl
+      vars:
+        lxctemplatedl_templates: "{{ proxmox_lxc_templates }}"
+        lxctemplatedl_storage: "{{ proxmox_lxc_template_storage }}"
+        lxctemplatedl_update_list: "{{ proxmox_lxc_template_update_list }}"
+        lxctemplatedl_ensure_present: "{{ proxmox_lxc_template_ensure_present }}"
+        lxctemplatedl_force_download: "{{ proxmox_lxc_template_force_download }}"
+        lxctemplatedl_timeout: "{{ proxmox_lxc_template_timeout }}"
+      tags:
+        - templates
+        - proxmox
+
+  post_tasks:
+    - name: Display final template status
+      ansible.builtin.command:
+        cmd: "pveam list {{ proxmox_lxc_template_storage }}"
+      register: final_templates
+      changed_when: false
+
+    - name: Show available templates on this node
+      ansible.builtin.debug:
+        msg: |
+          Templates available on {{ inventory_hostname }}:
+          {{ final_templates.stdout_lines | join('\n') }}
+      when: final_templates.stdout_lines | length > 0
+
+# Example usage:
+#
+# Download templates to all proxmox nodes:
+#   ansible-playbook playbooks/proxmox/download-lxc-templates.yml
+#
+# Download to specific nodes:
+#   ansible-playbook playbooks/proxmox/download-lxc-templates.yml -l proxmox-node-01
+#
+# Force re-download templates:
+#   ansible-playbook playbooks/proxmox/download-lxc-templates.yml -e proxmox_lxc_template_force_download=true
+#
+# Use different storage:
+#   ansible-playbook playbooks/proxmox/download-lxc-templates.yml -e proxmox_lxc_template_storage=shared-storage
+#
+# Download only specific templates:
+#   ansible-playbook playbooks/proxmox/download-lxc-templates.yml -e '{"proxmox_lxc_templates":[{"name":"ubuntu-22.04-standard_22.04-1_amd64.tar.zst"}]}'

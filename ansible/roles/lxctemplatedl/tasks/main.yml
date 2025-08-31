@@ -1,0 +1,77 @@
+---
+- name: Update LXC template list
+  ansible.builtin.command:
+    cmd: pveam update
+  when: lxctemplatedl_update_list | bool
+  changed_when: lxctemplatedl_update_list | bool
+  tags:
+    - proxmox
+    - templates
+
+- name: Check available templates
+  ansible.builtin.command:
+    cmd: pveam available
+  register: lxctemplatedl_available_templates
+  changed_when: false
+  tags:
+    - proxmox
+    - templates
+
+- name: List currently downloaded templates
+  ansible.builtin.command:
+    cmd: "pveam list {{ lxctemplatedl_storage }}"
+  register: lxctemplatedl_downloaded_templates
+  changed_when: false
+  failed_when: false
+  tags:
+    - proxmox
+    - templates
+
+- name: Download LXC templates
+  ansible.builtin.command:
+    cmd: pveam download {{ lxctemplatedl_storage }} {{ item.name }}
+  loop: "{{ lxctemplatedl_templates }}"
+  when:
+    - lxctemplatedl_ensure_present | bool
+    - item.name in lxctemplatedl_available_templates.stdout
+    - item.name not in lxctemplatedl_downloaded_templates.stdout
+  changed_when: item.name not in lxctemplatedl_downloaded_templates.stdout
+  notify: Template downloaded
+  register: template_download_result
+  timeout: "{{ lxctemplatedl_timeout }}"
+  tags:
+    - proxmox
+    - templates
+
+- name: Force download LXC templates (when forced)
+  ansible.builtin.command:
+    cmd: pveam download {{ lxctemplatedl_storage }} {{ item.name }}
+  loop: "{{ lxctemplatedl_templates }}"
+  when:
+    - lxctemplatedl_ensure_present | bool
+    - lxctemplatedl_force_download | bool
+    - item.name in lxctemplatedl_available_templates.stdout
+  changed_when: true
+  notify: Template downloaded
+  register: template_force_download_result
+  timeout: "{{ lxctemplatedl_timeout }}"
+  tags:
+    - proxmox
+    - templates
+
+- name: Verify templates are present
+  ansible.builtin.command:
+    cmd: "pveam list {{ lxctemplatedl_storage }}"
+  register: lxctemplatedl_final_templates
+  changed_when: false
+  tags:
+    - proxmox
+    - templates
+
+- name: Display downloaded templates
+  ansible.builtin.debug:
+    msg: "Downloaded templates: {{ lxctemplatedl_final_templates.stdout_lines }}"
+  when: lxctemplatedl_final_templates.stdout_lines | length > 0
+  tags:
+    - proxmox
+    - templates

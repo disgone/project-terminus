@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: MIT-0
+---
+# defaults file for lxctemplatedl
+
+# Template management
+lxctemplatedl_update_list: true
+lxctemplatedl_ensure_present: true
+
+# Storage configuration
+lxctemplatedl_storage: local
+
+# Templates to download (list format)
+lxctemplatedl_templates: []
+# Example templates:
+# - name: "ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
+#   section: "system"
+# - name: "debian-12-standard_12.2-1_amd64.tar.zst"
+#   section: "system"
+
+# Template operations
+lxctemplatedl_force_download: false
+lxctemplatedl_timeout: 300

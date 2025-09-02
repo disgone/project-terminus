@@ -1,0 +1,45 @@
+# Proxmox Configuration
+# Copy this file to terraform.tfvars and customize for your environment
+
+# Proxmox Settings
+target_node  = "proxmox"      # Your Proxmox node name
+storage_pool = "local-zfs"    # Your storage pool
+
+# Template Configuration
+template_vm_id = 9000                    # VM ID for template (9000-9999 range)
+template_name  = "ubuntu-lts-template"   # Name of the template
+
+# Ubuntu Version (24.04 is latest LTS)
+ubuntu_version = "24.04"
+
+# Hardware Configuration
+memory      = 2048    # Memory in MB
+cpu_cores   = 2       # Number of CPU cores
+cpu_sockets = 1       # Number of CPU sockets
+cpu_type    = "host"  # CPU type (host, kvm64, qemu64)
+
+# Disk Configuration
+disk_size = "20G"     # Disk size (e.g., "20G", "32G")
+
+# Network Configuration
+network_bridge = "vmbr0"  # Network bridge
+
+# Cloud-init Configuration
+cloud_init_user = "ubuntu"  # Default user
+
+# SSH Keys - Update this path to your SSH public key file
+ssh_keys_file = "/root/.ssh/authorized_keys"
+
+# Additional packages to install
+cloud_init_packages = [
+  "qemu-guest-agent",
+  "curl",
+  "wget",
+  "git",
+  "htop",
+  "vim",
+  "unzip"
+]
+
+# Tags for organization
+tags = ["ubuntu-template", "lts", "cloudinit", "homelab"]

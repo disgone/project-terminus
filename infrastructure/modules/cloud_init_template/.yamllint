@@ -1,0 +1,8 @@
+# yamllint configuration for cloud_init_template module
+# Template files (.tftpl) should be excluded from YAML linting
+# as they contain Terraform template syntax
+
+extends: default
+
+ignore: |
+  templates/*.tftpl

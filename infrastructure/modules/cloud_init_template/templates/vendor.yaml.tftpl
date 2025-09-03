@@ -1,0 +1,47 @@
+#cloud-config
+# Cloud-init configuration for VM template
+# This configuration runs once during first boot
+
+%{ if length(packages) > 0 ~}
+# Package installation
+packages:
+%{ for package in packages ~}
+  - ${package}
+%{ endfor ~}
+
+# Update package cache after installation
+package_update: true
+package_upgrade: false
+%{ endif ~}
+
+# Security configuration
+ssh_pwauth: false
+disable_root: true
+preserve_hostname: false
+
+# Ensure proper permissions and ownership
+users:
+  - default
+
+# System configuration
+timezone: UTC
+locale: en_US.UTF-8
+
+%{ if length(runcmd) > 0 ~}
+# Commands to run after package installation
+# These run as root during first boot
+runcmd:
+%{ for cmd in runcmd ~}
+  - ${cmd}
+%{ endfor ~}
+%{ endif ~}
+
+%{ if additional_config != "" ~}
+# Additional user configuration
+${additional_config}
+%{ endif ~}
+
+# Cleanup and finalization
+final_message: "Cloud-init setup completed. System is ready for use."
+
+# Reference: https://forum.proxmox.com/threads/combining-custom-cloud-init-with-auto-generated.59008/page-3#post-428772

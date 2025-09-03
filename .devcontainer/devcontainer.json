@@ -1,17 +1,27 @@
 {
-  "name": "ansible-dev-container-docker",
-  "image": "ghcr.io/ansible/community-ansible-dev-tools:latest",
+  "name": "ansible+opentofu",
+  "build": { "dockerfile": "Dockerfile" },
   "containerUser": "root",
+  "updateRemoteUserUID": true,
   "runArgs": [
     "--privileged",
-    "--device",
-    "/dev/fuse",
-    "--hostname=ansible-dev-container"
+    "--device", "/dev/fuse",
+    "--hostname=ansible-tofu-dev"
   ],
-  "updateRemoteUserUID": true,
+  "remoteEnv": {
+    "TF_PLUGIN_CACHE_DIR": "/root/.cache/opentofu/plugin-cache"
+  },
   "customizations": {
     "vscode": {
-      "extensions": ["redhat.ansible"]
+      "extensions": [
+        "redhat.ansible",
+        "OpenTofu.vscode-opentofu",
+        "ms-python.python"
+      ],
+      "settings": {
+        "ansible.python.interpreterPath": "/usr/bin/python3"
+      }
     }
-  }
+  },
+  "postCreateCommand": "mkdir -p /root/.cache/opentofu/plugin-cache && tofu version && ansible --version || true"
 }

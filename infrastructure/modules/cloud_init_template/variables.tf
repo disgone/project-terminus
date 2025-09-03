@@ -9,6 +9,11 @@ variable "image_name" {
   description = "Local filename for the downloaded cloud image"
   type        = string
   default     = "ubuntu-noble-cloudimg-amd64.img"
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9._-]+\\.(img|qcow2|raw)$", var.image_name))
+    error_message = "Image name must be a valid filename with only alphanumeric characters, dots, underscores, hyphens, and a valid image extension (.img, .qcow2, .raw)."
+  }
 }
 
 # Proxmox Configuration
@@ -21,6 +26,11 @@ variable "storage_pool" {
   description = "Proxmox storage pool name"
   type        = string
   default     = "local-zfs"
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9_-]+$", var.storage_pool))
+    error_message = "Storage pool name must contain only alphanumeric characters, underscores, and hyphens."
+  }
 }
 
 # VM Template Configuration
@@ -150,18 +160,33 @@ variable "cloud_init_file_name" {
   description = "Name of the cloud-init vendor file"
   type        = string
   default     = "vendor.yaml"
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9._-]+\\.(yaml|yml)$", var.cloud_init_file_name))
+    error_message = "Cloud-init file name must be a valid YAML filename with only alphanumeric characters, dots, underscores, and hyphens."
+  }
 }
 
 variable "cloud_init_user" {
   description = "Default user to create via cloud-init"
   type        = string
   default     = "ubuntu"
+
+  validation {
+    condition     = can(regex("^[a-z]([a-z0-9_-]*[a-z0-9])?$", var.cloud_init_user))
+    error_message = "Cloud-init user must be a valid Linux username (lowercase letters, numbers, underscores, and hyphens only)."
+  }
 }
 
 variable "ssh_keys_file" {
   description = "Path to SSH public keys file"
   type        = string
   default     = "~/.ssh/authorized_keys"
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9._/~-]+$", var.ssh_keys_file))
+    error_message = "SSH keys file path must contain only alphanumeric characters, dots, underscores, forward slashes, tildes, and hyphens."
+  }
 }
 
 variable "ip_config" {

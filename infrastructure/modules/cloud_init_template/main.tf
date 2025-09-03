@@ -128,7 +128,7 @@ resource "null_resource" "import_disk" {
   }
 
   provisioner "local-exec" {
-    command = "qm importdisk ${var.vm_id} '${var.image_name}' ${var.storage_pool}"
+    command = "qm importdisk ${var.vm_id} \"${var.image_name}\" \"${var.storage_pool}\""
   }
 }
 
@@ -146,13 +146,13 @@ resource "null_resource" "configure_disk" {
     command = <<-EOT
       set -e
       # Set SCSI hardware type and attach the disk
-      qm set ${var.vm_id} --scsihw virtio-scsi-pci --virtio0 ${var.storage_pool}:vm-${var.vm_id}-disk-1${var.disk_discard ? ",discard=on" : ""}
+      qm set ${var.vm_id} --scsihw virtio-scsi-pci --virtio0 "${var.storage_pool}":vm-${var.vm_id}-disk-1${var.disk_discard ? ",discard=on" : ""}
       
       # Set boot order
       qm set ${var.vm_id} --boot order=virtio0
       
       # Add cloud-init drive
-      qm set ${var.vm_id} --scsi1 ${var.storage_pool}:cloudinit
+      qm set ${var.vm_id} --scsi1 "${var.storage_pool}":cloudinit
     EOT
   }
 }
@@ -195,13 +195,13 @@ resource "null_resource" "configure_cloud_init" {
       qm set ${var.vm_id} --tags "${join(",", var.tags)}"
       
       # Set cloud-init user
-      qm set ${var.vm_id} --ciuser ${var.cloud_init_user}
+      qm set ${var.vm_id} --ciuser "${var.cloud_init_user}"
       
       # Import SSH keys
-      qm set ${var.vm_id} --sshkeys ${var.ssh_keys_file}
+      qm set ${var.vm_id} --sshkeys "${var.ssh_keys_file}"
       
       # Set IP configuration
-      qm set ${var.vm_id} --ipconfig0 ${var.ip_config}
+      qm set ${var.vm_id} --ipconfig0 "${var.ip_config}"
     EOT
   }
 }
@@ -228,6 +228,6 @@ resource "null_resource" "cleanup" {
   }
 
   provisioner "local-exec" {
-    command = "rm -f '${var.image_name}'"
+    command = "rm -f \"${var.image_name}\""
   }
 }

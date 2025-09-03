@@ -75,13 +75,40 @@ Creates a reusable Ubuntu LTS VM template with:
 |----------|---------|-------------|
 | `network_bridge` | `"vmbr0"` | Network bridge |
 
+### Cloud-init Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `cloud_init_user` | `"ubuntu"` | Default user for cloud-init |
+| `ssh_keys_file` | `"/root/.ssh/authorized_keys"` | Path to SSH public keys file |
+| `cloud_init_packages` | See below | List of packages to install |
+| `cloud_init_runcmd` | See below | List of commands to run |
+
+### Image Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `image_url` | Ubuntu 24.04 Noble image | URL to download Ubuntu cloud image |
+| `image_name` | `"ubuntu-noble-cloudimg-amd64.img"` | Local filename for cloud image |
+
+### Template Metadata
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `tags` | `["ubuntu-template", "lts", "cloudinit", "homelab"]` | Tags for organization |
+
 ## What Gets Created
 
 1. **VM Template** with ID 9000 (configurable)
-2. **Cloud-init configuration** with vendor data
+2. **Cloud-init configuration** with vendor data including:
+   - Custom MOTD with homelab branding
+   - Locale set to en_US.UTF-8
+   - Timezone set to UTC
+   - SSH key injection
 3. **Pre-installed packages**: qemu-guest-agent, curl, wget, git, htop, vim, unzip
-4. **Security configuration**: SSH keys, disabled root login
-5. **Tags** for organization
+4. **Automated setup commands**: system updates, qemu-guest-agent enablement, SSH configuration
+5. **Security configuration**: SSH keys, proper user setup
+6. **Tags** for organization: ubuntu-template, lts, cloudinit, homelab
 
 ## Using the Template
 
@@ -97,6 +124,36 @@ qm start 100
 Or use it with other OpenTofu stacks for automated VM deployment.
 
 ## Customization
+
+### Default Cloud-init Packages
+
+The template installs these packages by default:
+```hcl
+cloud_init_packages = [
+  "qemu-guest-agent",
+  "curl", 
+  "wget",
+  "git",
+  "htop",
+  "vim",
+  "unzip"
+]
+```
+
+### Default Cloud-init Commands
+
+These commands run during template creation:
+```hcl
+cloud_init_runcmd = [
+  "apt-get update",
+  "apt-get upgrade -y", 
+  "apt-get autoremove -y",
+  "systemctl enable qemu-guest-agent",
+  "systemctl start qemu-guest-agent",
+  "systemctl enable ssh",
+  "echo 'Template setup completed' > /var/log/cloud-init-template.log"
+]
+```
 
 ### Additional Packages
 
@@ -123,6 +180,11 @@ cloud_init_runcmd = [
 
 ### Additional Cloud-init Config
 
+The template includes default additional configuration that sets up:
+- Custom MOTD (Message of the Day) with homelab branding
+- Locale set to en_US.UTF-8  
+- Timezone set to UTC
+
 Customize `cloud_init_additional_config` for advanced configuration:
 ```hcl
 cloud_init_additional_config = <<-EOT
@@ -131,6 +193,9 @@ write_files:
     content: |
       # Custom configuration
     permissions: '0644'
+# Override default locale/timezone if needed
+locale: en_GB.UTF-8
+timezone: Europe/London
 EOT
 ```
 
@@ -138,9 +203,18 @@ EOT
 
 After deployment, the stack provides:
 - `template_id`: Created template VM ID
-- `template_name`: Template name
-- `target_node`: Proxmox node
-- `configuration_summary`: Summary of settings
+- `template_name`: Template name  
+- `target_node`: Proxmox node where template was created
+- `storage_pool`: Storage pool used for the template
+- `tags`: Tags applied to the template
+- `cloud_init_file`: Path to the cloud-init vendor configuration file
+- `configuration_summary`: Detailed summary of template settings including:
+  - Ubuntu version
+  - Memory allocation (MB)
+  - CPU configuration (cores, sockets, type)
+  - Disk size
+  - Network bridge
+  - VM ID
 
 ## Integration with Homelab
 
@@ -175,6 +249,6 @@ tofu destroy
 
 ## Related Documentation
 
-- [Cloud-init Template Module](../../modules/cloud_init_template/README.md)
-- [Project Style Guide](../../../agents.md)
+- [Cloud-init Template Module](../../../modules/cloud_init_template/README.md)
+- [Project Style Guide](../../../../agents.md)
 - [Proxmox Cloud-init Guide](https://pve.proxmox.com/wiki/Cloud-Init_Support)
